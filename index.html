@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>헬로방방 부천점 — 근무현황 캘린더</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-webkit-text-size-adjust:100%;}
+.header{background:#0C447C;color:#fff;}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-wrap:wrap;gap:8px;}
+.header-title{font-size:17px;font-weight:700;}
+.header-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ctrl-group{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.ctrl-label{font-size:10px;opacity:.7;}
+.ctrl-select{font-size:14px;padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-family:inherit;cursor:pointer;-webkit-appearance:none;}
+.ctrl-select option{background:#0C447C;}
+.nav-btns{display:flex;gap:6px;}
+.nav-btn{font-size:13px;padding:6px 12px;border-radius:6px;border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-family:inherit;}
+.nav-btn.today{background:rgba(255,255,255,0.9);color:#0C447C;font-weight:600;}
+.admin-bar{background:#1a1a1a;color:#fff;padding:6px 16px;font-size:12px;display:flex;align-items:center;justify-content:space-between;}
+.logout-btn{font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;cursor:pointer;font-family:inherit;}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;}
+.tab{padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#6B7280;}
+.tab.active{border-bottom-color:#0C447C;color:#0C447C;}
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;background:#fff;border-bottom:1px solid #e5e7eb;}
+.leg-item{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.cal-wrap{padding:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.cal{min-width:700px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-head-cell{padding:10px 4px;text-align:center;font-size:13px;font-weight:700;}
+.cal-head-cell.sun{background:#DC2626;color:#fff;}
+.cal-head-cell.sat{background:#1D4ED8;color:#fff;}
+.cal-head-cell.wd{background:#0C447C;color:#fff;}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #e5e7eb;}
+.cal-cell{min-height:110px;padding:6px;border-right:1px solid #e5e7eb;position:relative;background:#fff;}
+.cal-cell:last-child{border-right:none;}
+.cal-cell.empty{background:#f9fafb;}
+.cal-cell.hol-bg{background:#FFF5F5;}
+.cal-cell.today-bg{background:#E6F1FB;}
+.cal-date{font-size:13px;font-weight:700;margin-bottom:4px;display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;}
+.cal-date.sun-c,.cal-date.hol-c{color:#DC2626;}
+.cal-date.sat-c{color:#1D4ED8;}
+.cal-date.today-c{background:#0C447C;color:#fff;}
+.entry{display:flex;align-items:center;justify-content:space-between;padding:2px 5px;border-radius:4px;margin-bottom:2px;cursor:pointer;}
+.entry .en{font-size:10px;font-weight:700;}
+.entry .et{font-size:9px;opacity:.85;}
+.entry.off-e{background:#FEE2E2 !important;}
+.entry.off-e .en,.entry.off-e .et{color:#991B1B !important;}
+.add-btn{position:absolute;bottom:3px;right:3px;font-size:10px;padding:2px 6px;border-radius:4px;border:1px dashed #9CA3AF;background:transparent;color:#9CA3AF;cursor:pointer;display:none;}
+.cal-cell:hover .add-btn{display:block;}
+.save-bar{padding:10px 16px;background:#fff;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:10px;position:sticky;bottom:0;z-index:50;}
+.save-main-btn{font-size:14px;padding:10px 20px;border-radius:8px;border:none;background:#0C447C;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;}
+.save-msg{font-size:12px;}
+.staff-page{padding:14px;display:none;}
+.staff-page .inner{max-width:600px;margin:0 auto;}
+.staff-card{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e5e7eb;margin-bottom:8px;}
+.staff-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.staff-chip{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.staff-card-info{font-size:11px;color:#6B7280;display:flex;gap:12px;flex-wrap:wrap;}
+.btn-edit{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #378ADD;background:#E6F1FB;color:#0C447C;cursor:pointer;font-family:inherit;}
+.btn-retire{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #EF4444;background:#FEF2F2;color:#DC2626;cursor:pointer;font-family:inherit;}
+.add-form{background:#fff;border-radius:10px;padding:16px;border:1px solid #e5e7eb;margin-top:10px;}
+.form-title{font-size:13px;font-weight:700;margin-bottom:12px;color:#0C447C;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;color:#6B7280;font-weight:500;}
+.field select,.field input{font-size:15px;padding:9px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#F9FAFB;color:#1a1a1a;outline:none;font-family:inherit;-webkit-appearance:none;width:100%;}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+.off-days{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.off-days label{display:flex;align-items:center;gap:3px;font-size:13px;}
+.green-btn{width:100%;padding:12px;font-size:14px;font-weight:600;border:none;border-radius:8px;background:#0C447C;color:#fff;cursor:pointer;font-family:inherit;margin-top:4px;}
+.sheet-btn{width:100%;padding:11px;font-size:14px;font-weight:600;border:none;border-radius:8px;background:#1E40AF;color:#fff;cursor:pointer;font-family:inherit;margin-top:8px;}
+.modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:20px;width:92%;max-width:390px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:14px;color:#0C447C;}
+.modal-btns{display:flex;gap:8px;margin-top:14px;}
+.modal-ok{flex:1;font-size:14px;padding:11px;border-radius:8px;border:none;background:#0C447C;color:#fff;cursor:pointer;font-family:inherit;font-weight:500;}
+.modal-del{font-size:14px;padding:11px 14px;border-radius:8px;border:1px solid #EF4444;background:#FEF2F2;color:#DC2626;cursor:pointer;font-family:inherit;}
+.modal-no{flex:1;font-size:14px;padding:11px;border-radius:8px;border:1px solid #e5e7eb;background:#F9FAFB;color:#6B7280;cursor:pointer;font-family:inherit;}
+@media(max-width:600px){.cal-cell{min-height:75px;}.entry .en{font-size:9px;}.entry .et{font-size:8px;}}
+</style>
+</head>
+<body>
+<div id="admin-bar" class="admin-bar" style="display:none;">
+  <span>🔓 관리자 모드</span>
+  <button class="logout-btn" onclick="logoutAdmin()">로그아웃</button>
+</div>
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">🗓 월드킹 계양점 근무현황</div>
+    <div class="header-controls">
+      <div class="ctrl-group">
+        <div class="ctrl-label">연도</div>
+        <select class="ctrl-select" id="sel-year" onchange="onMonthChange()"></select>
+      </div>
+      <div class="ctrl-group">
+        <div class="ctrl-label">월</div>
+        <select class="ctrl-select" id="sel-month" onchange="onMonthChange()"></select>
+      </div>
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="prevMonth()">◀</button>
+        <button class="nav-btn today" onclick="goToday()">오늘</button>
+        <button class="nav-btn" onclick="nextMonth()">▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab active" id="tab-cal" onclick="switchTab('cal')">📅 근무현황</div>
+  <div class="tab" id="tab-staff" onclick="switchTab('staff')" style="display:none;">👥 직원관리</div>
+</div>
+<div class="legend" id="legend"></div>
+<div class="cal-wrap" id="cal-wrap">
+  <div class="cal" id="cal">
+    <div class="cal-head">
+      <div class="cal-head-cell sun">일 SUN</div>
+      <div class="cal-head-cell wd">월 MON</div>
+      <div class="cal-head-cell wd">화 TUE</div>
+      <div class="cal-head-cell wd">수 WED</div>
+      <div class="cal-head-cell wd">목 THU</div>
+      <div class="cal-head-cell wd">금 FRI</div>
+      <div class="cal-head-cell sat">토 SAT</div>
+    </div>
+    <div id="cal-body"></div>
+  </div>
+</div>
+<div class="save-bar" id="save-bar" style="display:none;">
+  <button class="save-main-btn" onclick="saveSchedule()">💾 구글 시트 저장</button>
+  <span class="save-msg" id="save-msg"></span>
+</div>
+<div class="staff-page" id="staff-page">
+<div class="inner">
+  <div class="form-title" style="margin-bottom:8px;">👥 현재 직원</div>
+  <div id="staff-list"></div>
+  <div class="add-form">
+    <div class="form-title">+ 직원 추가</div>
+    <div class="g2">
+      <div class="field"><label>이름</label><input type="text" id="ns-name" placeholder="예: 김민지"/></div>
+      <div class="field"><label>포지션</label><select id="ns-pos">
+        <option>정규직</option><option>파트타임</option><option>관리자</option><option>사장님</option><option>대장님</option>
+      </select></div>
+    </div>
+    <div class="g2">
+      <div class="field"><label>기본 출근</label><select id="ns-start"><option value="">없음</option>
+<option value="09:30">오전 9시 30분</option>
+<option value="10:00">오전 10시</option>
+<option value="11:00">오전 11시</option>
+<option value="12:00">오후 12시</option>
+<option value="13:00">오후 1시</option>
+<option value="14:00">오후 2시</option>
+<option value="15:00">오후 3시</option>
+<option value="16:00">오후 4시</option>
+<option value="17:00">오후 5시</option>
+</select></div>
+      <div class="field"><label>기본 퇴근</label><select id="ns-end"><option value="">없음</option>
+<option value="13:00">오후 1시</option>
+<option value="14:00">오후 2시</option>
+<option value="15:00">오후 3시</option>
+<option value="16:00">오후 4시</option>
+<option value="17:00">오후 5시</option>
+<option value="18:00">오후 6시</option>
+<option value="19:00">오후 7시</option>
+<option value="20:00">오후 8시</option>
+</select></div>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>기본 휴무 요일</label>
+      <div class="off-days">
+        <label><input type="checkbox" id="off0" value="0"> 일</label>
+        <label><input type="checkbox" id="off1" value="1"> 월</label>
+        <label><input type="checkbox" id="off2" value="2"> 화</label>
+        <label><input type="checkbox" id="off3" value="3"> 수</label>
+        <label><input type="checkbox" id="off4" value="4"> 목</label>
+        <label><input type="checkbox" id="off5" value="5"> 금</label>
+        <label><input type="checkbox" id="off6" value="6"> 토</label>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>색상</label>
+      <select id="ns-color">
+        <option value="#DBEAFE|#1E40AF">파랑</option>
+        <option value="#EDE9FE|#5B21B6">보라</option>
+        <option value="#DCFCE7|#1E40AF">초록</option>
+        <option value="#FEF3C7|#92400E">노랑</option>
+        <option value="#FCE7F3|#9D174D">분홍</option>
+        <option value="#FFF7ED|#C2410C">주황</option>
+        <option value="#F3F4F6|#374151">회색</option>
+        <option value="#CFFAFE|#164E63">하늘</option>
+      </select>
+    </div>
+    <button class="green-btn" onclick="addStaff()">+ 직원 추가</button>
+    <button class="sheet-btn" onclick="saveStaffToSheet()">💾 직원 목록 구글 시트 저장</button>
+    <span id="staff-save-msg" style="font-size:12px;display:block;margin-top:6px;"></span>
+  </div>
+</div>
+</div>
+<!-- 근무 추가/수정 모달 -->
+<div class="modal-bg" id="entry-modal">
+  <div class="modal">
+    <div class="modal-title" id="entry-modal-title">근무 설정</div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>직원</label>
+      <select id="m-staff" onchange="onStaffChange()"></select>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>근무 상태</label>
+      <select id="m-status" onchange="onStatusChange()">
+        <option value="work">근무</option>
+        <option value="off">휴무</option>
+      </select>
+    </div>
+    <div id="m-time-wrap">
+      <div class="field" style="margin-bottom:10px;">
+        <label>출근 시간</label>
+        <select id="m-start"><option value="">없음</option>
+<option value="09:30">오전 9시 30분</option>
+<option value="10:00">오전 10시</option>
+<option value="11:00">오전 11시</option>
+<option value="12:00">오후 12시</option>
+<option value="13:00">오후 1시</option>
+<option value="14:00">오후 2시</option>
+<option value="15:00">오후 3시</option>
+<option value="16:00">오후 4시</option>
+<option value="17:00">오후 5시</option>
+</select>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>퇴근 시간</label>
+        <select id="m-end"><option value="">없음</option>
+<option value="13:00">오후 1시</option>
+<option value="14:00">오후 2시</option>
+<option value="15:00">오후 3시</option>
+<option value="16:00">오후 4시</option>
+<option value="17:00">오후 5시</option>
+<option value="18:00">오후 6시</option>
+<option value="19:00">오후 7시</option>
+<option value="20:00">오후 8시</option>
+</select>
+      </div>
+      <div class="field" style="margin-bottom:4px;">
+        <label>메모</label>
+        <input type="text" id="m-memo" placeholder="예: 파티룸 담당"/>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-no" onclick="closeEntryModal()">취소</button>
+      <button class="modal-del" id="m-del-btn" onclick="delEntry()" style="display:none;">삭제</button>
+      <button class="modal-ok" onclick="saveEntry()">저장</button>
+    </div>
+  </div>
+</div>
+<!-- 직원 수정 모달 -->
+<div class="modal-bg" id="staff-edit-modal">
+  <div class="modal">
+    <div class="modal-title" id="se-title">직원 정보 수정</div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>기본 출근 시간</label>
+      <select id="se-start"><option value="">없음</option>
+<option value="09:30">오전 9시 30분</option>
+<option value="10:00">오전 10시</option>
+<option value="11:00">오전 11시</option>
+<option value="12:00">오후 12시</option>
+<option value="13:00">오후 1시</option>
+<option value="14:00">오후 2시</option>
+<option value="15:00">오후 3시</option>
+<option value="16:00">오후 4시</option>
+<option value="17:00">오후 5시</option>
+</select>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>기본 퇴근 시간</label>
+      <select id="se-end"><option value="">없음</option>
+<option value="13:00">오후 1시</option>
+<option value="14:00">오후 2시</option>
+<option value="15:00">오후 3시</option>
+<option value="16:00">오후 4시</option>
+<option value="17:00">오후 5시</option>
+<option value="18:00">오후 6시</option>
+<option value="19:00">오후 7시</option>
+<option value="20:00">오후 8시</option>
+</select>
+    </div>
+    <div class="field" style="margin-bottom:4px;">
+      <label>기본 휴무 요일</label>
+      <div class="off-days" style="margin-top:6px;">
+        <label><input type="checkbox" id="se-off0" value="0"> 일</label>
+        <label><input type="checkbox" id="se-off1" value="1"> 월</label>
+        <label><input type="checkbox" id="se-off2" value="2"> 화</label>
+        <label><input type="checkbox" id="se-off3" value="3"> 수</label>
+        <label><input type="checkbox" id="se-off4" value="4"> 목</label>
+        <label><input type="checkbox" id="se-off5" value="5"> 금</label>
+        <label><input type="checkbox" id="se-off6" value="6"> 토</label>
+      </div>
+    </div>
+    <input type="hidden" id="se-idx"/>
+    <div class="modal-btns">
+      <button class="modal-no" onclick="closeStaffEdit()">취소</button>
+      <button class="modal-ok" onclick="saveStaffEdit()">저장</button>
+    </div>
+  </div>
+</div>
+<script>
+const SHEET_URL='https://script.google.com/macros/s/AKfycbxoxtBU1ebolIZAn9aXKHMumCpM__hqVURvDC0ly0MJrob_2XfgqvbL9WMf2lr_sT3n/exec';
+const HOLIDAYS=['2026-01-01','2026-01-28','2026-01-29','2026-01-30','2026-03-01','2026-04-06','2026-05-05','2026-05-25','2026-06-06','2026-08-15','2026-09-28','2026-09-29','2026-09-30','2026-10-03','2026-10-09','2026-12-25'];
+const DEFAULT_STAFF=[
+  {name:'예지',pos:'정규직',start:'',end:'',offDays:[],color:'#DBEAFE|#1E40AF'},
+  {name:'병진',pos:'정규직',start:'',end:'',offDays:[],color:'#EDE9FE|#5B21B6'},
+  {name:'하은',pos:'정규직',start:'',end:'',offDays:[],color:'#FDE8FF|#7E22CE'},
+  {name:'은지',pos:'파트타임',start:'11:00',end:'16:00',offDays:[],color:'#DCFCE7|#166534'},
+  {name:'경임',pos:'파트타임',start:'13:00',end:'17:00',offDays:[],color:'#FEF3C7|#92400E'},
+  {name:'예은',pos:'파트타임',start:'14:00',end:'18:00',offDays:[],color:'#FCE7F3|#9D174D'},
+  {name:'범수',pos:'파트타임',start:'16:00',end:'20:00',offDays:[],color:'#FFF7ED|#C2410C'},
+  {name:'선웅',pos:'파트타임',start:'16:00',end:'20:00',offDays:[],color:'#CFFAFE|#164E63'},
+  {name:'주연',pos:'파트타임',start:'16:00',end:'20:00',offDays:[],color:'#F3F4F6|#374151'},
+  {name:'사장님',pos:'관리자',start:'',end:'',offDays:[],color:'#FEF9C3|#854D0E'},
+];
+let staffData = JSON.parse(localStorage.getItem('wk_staff_v3')||'null') || DEFAULT_STAFF.map(s=>({...s}));
+let schedule = {};
+let isAdmin = sessionStorage.getItem('wk_admin')==='1';
+let editTarget = null;
+const now = new Date();
+let curYear = now.getFullYear();
+let curMonth = now.getMonth();
+
+function pad(n){return n<10?'0'+n:String(n);}
+function dk(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d);}
+function isHol(k){return HOLIDAYS.includes(k);}
+function fmtT(t){
+  if(!t)return '';
+  const [hStr,mStr]=t.split(':');
+  const h=parseInt(hStr),m=parseInt(mStr)||0;
+  return (h<12?'오전 ':'오후 ')+(h<=12?h:h-12)+'시'+(m>0?' '+m+'분':'');
+}
+
+// 연도/월 셀렉트 초기화
+(function(){
+  const sy=document.getElementById('sel-year');
+  for(let y=2025;y<=2028;y++){
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y+'년';
+    if(y===curYear)o.selected=true;
+    sy.appendChild(o);
+  }
+  const sm=document.getElementById('sel-month');
+  for(let m=0;m<12;m++){
+    const o=document.createElement('option');
+    o.value=m;o.textContent=(m+1)+'월';
+    if(m===curMonth)o.selected=true;
+    sm.appendChild(o);
+  }
+})();
+
+// 관리자 모드
+function checkAdmin(){
+  if(isAdmin)return true;
+  const pw=prompt('관리자 비밀번호를 입력해주세요:');
+  if(pw==='1023'){isAdmin=true;sessionStorage.setItem('wk_admin','1');updateAdminUI();return true;}
+  else if(pw!==null)alert('비밀번호가 틀렸습니다.');
+  return false;
+}
+function logoutAdmin(){isAdmin=false;sessionStorage.removeItem('wk_admin');updateAdminUI();alert('로그아웃됐어요.');}
+function updateAdminUI(){
+  document.getElementById('admin-bar').style.display=isAdmin?'flex':'none';
+  document.getElementById('tab-staff').style.display=isAdmin?'block':'none';
+  document.getElementById('save-bar').style.display=isAdmin?'flex':'none';
+}
+
+function switchTab(t){
+  const isCal=t==='cal';
+  document.getElementById('tab-cal').classList.toggle('active',isCal);
+  document.getElementById('tab-staff').classList.toggle('active',!isCal);
+  document.getElementById('cal-wrap').style.display=isCal?'block':'none';
+  document.getElementById('save-bar').style.display=isCal&&isAdmin?'flex':'none';
+  document.getElementById('legend').style.display=isCal?'flex':'none';
+  document.getElementById('staff-page').style.display=isCal?'none':'block';
+  if(!isCal)renderStaffList();
+}
+
+function renderLegend(){
+  document.getElementById('legend').innerHTML=staffData.map(s=>{
+    const [bg,tc]=(s.color||'#F3F4F6|#374151').split('|');
+    return `<span class="leg-item" style="background:${bg};color:${tc};">${s.name} <span style="font-weight:400;">${s.pos}</span></span>`;
+  }).join('');
+}
+
+// 구글 시트에서 해당 월 데이터 불러오기
+function loadFromSheet(){
+  const ym = curYear+'-'+pad(curMonth+1);
+  fetch(SHEET_URL+'?yearMonth='+ym)
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.status==='ok'){
+        // 해당 월 스케줄 초기화 후 덮어쓰기
+        Object.keys(schedule).forEach(k=>{if(k.startsWith(ym))delete schedule[k];});
+        if(data.schedules&&data.schedules.length){
+          data.schedules.forEach(s=>{
+            if(!schedule[s.date])schedule[s.date]=[];
+            schedule[s.date].push({name:s.staff,status:s.status||'work',start:s.startTime||'',end:s.endTime||'',memo:s.memo||''});
+          });
+        }
+        // 직원 데이터 덮어쓰기
+        if(data.staffList&&data.staffList.length){
+          staffData=data.staffList.map(s=>({
+            name:String(s[0]||''),pos:String(s[1]||'정규직'),
+            start:String(s[2]||''),end:String(s[3]||''),
+            offDays:(s[4]?String(s[4]).split(',').filter(v=>v!=='').map(Number):[]),
+            color:String(s[5]||'#F3F4F6|#374151')
+          }));
+          localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
+        }
+      }
+    })
+    .catch(()=>{})
+    .finally(()=>{renderLegend();renderCalBody();});
+}
+
+function onMonthChange(){
+  curYear=parseInt(document.getElementById('sel-year').value);
+  curMonth=parseInt(document.getElementById('sel-month').value);
+  loadFromSheet();
+}
+
+function prevMonth(){curMonth--;if(curMonth<0){curMonth=11;curYear--;}document.getElementById('sel-year').value=curYear;document.getElementById('sel-month').value=curMonth;loadFromSheet();}
+function nextMonth(){curMonth++;if(curMonth>11){curMonth=0;curYear++;}document.getElementById('sel-year').value=curYear;document.getElementById('sel-month').value=curMonth;loadFromSheet();}
+function goToday(){curYear=now.getFullYear();curMonth=now.getMonth();document.getElementById('sel-year').value=curYear;document.getElementById('sel-month').value=curMonth;loadFromSheet();}
+
+function renderCalBody(){
+  const firstDow=new Date(curYear,curMonth,1).getDay();
+  const lastDate=new Date(curYear,curMonth+1,0).getDate();
+  const todayKey=dk(now.getFullYear(),now.getMonth(),now.getDate());
+  let html='',dayCount=0,weekHtml='<div class="cal-week">';
+  for(let i=0;i<firstDow;i++){weekHtml+=`<div class="cal-cell empty"></div>`;dayCount++;}
+  for(let d=1;d<=lastDate;d++){
+    const key=dk(curYear,curMonth,d);
+    const dow=new Date(curYear,curMonth,d).getDay();
+    const hol=isHol(key),isToday=key===todayKey;
+    let cls='cal-cell'+(hol?' hol-bg':'')+(isToday?' today-bg':'');
+    let dateCls='cal-date'+(isToday?' today-c':dow===0||hol?' sun-c hol-c':dow===6?' sat-c':'');
+    const entries=schedule[key]||[];
+    let eHtml='';
+    entries.forEach((e,idx)=>{
+      const s=staffData.find(s=>s.name===e.name);
+      const [bg,tc]=((s&&s.color)||'#F3F4F6|#374151').split('|');
+      if(e.status==='off'){
+        eHtml+=`<div class="entry off-e" onclick="openEdit('${key}',${idx})"><span class="en">🚫 ${e.name}</span><span class="et">휴무</span></div>`;
+      } else {
+        const t=(e.start&&e.end)?e.start+'~'+e.end:e.start?e.start+'~':'';
+        eHtml+=`<div class="entry" style="background:${bg};color:${tc};" onclick="openEdit('${key}',${idx})"><span class="en">${e.name}</span><span class="et">${t||e.memo||'근무'}</span></div>`;
+      }
+    });
+    weekHtml+=`<div class="${cls}"><div class="${dateCls}">${d}</div>${eHtml}<button class="add-btn" onclick="openAdd('${key}')">+ 추가</button></div>`;
+    dayCount++;
+    if(dayCount%7===0){weekHtml+='</div>';html+=weekHtml;weekHtml='<div class="cal-week">';}
+  }
+  const rem=dayCount%7;
+  if(rem>0){for(let i=rem;i<7;i++)weekHtml+=`<div class="cal-cell empty"></div>`;weekHtml+='</div>';html+=weekHtml;}
+  document.getElementById('cal-body').innerHTML=html;
+}
+
+function openAdd(dateKey){
+  if(!checkAdmin())return;
+  editTarget={dateKey,idx:null};
+  const d=new Date(dateKey);
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('entry-modal-title').textContent=`📅 ${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]}) 직원 추가`;
+  const sel=document.getElementById('m-staff');
+  sel.innerHTML=staffData.map(s=>`<option value="${s.name}">${s.name} (${s.pos})</option>`).join('');
+  document.getElementById('m-status').value='work';
+  document.getElementById('m-memo').value='';
+  document.getElementById('m-del-btn').style.display='none';
+  onStaffChange();onStatusChange();
+  document.getElementById('entry-modal').classList.add('show');
+}
+
+function openEdit(dateKey,idx){
+  if(!checkAdmin())return;
+  editTarget={dateKey,idx};
+  const e=schedule[dateKey][idx];
+  const d=new Date(dateKey);
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('entry-modal-title').textContent=`✏️ ${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]}) ${e.name} 수정`;
+  const sel=document.getElementById('m-staff');
+  sel.innerHTML=staffData.map(s=>`<option value="${s.name}"${s.name===e.name?' selected':''}>${s.name} (${s.pos})</option>`).join('');
+  document.getElementById('m-status').value=e.status||'work';
+  document.getElementById('m-start').value=e.start||'';
+  document.getElementById('m-end').value=e.end||'';
+  document.getElementById('m-memo').value=e.memo||'';
+  document.getElementById('m-del-btn').style.display='block';
+  onStatusChange();
+  document.getElementById('entry-modal').classList.add('show');
+}
+
+function onStaffChange(){
+  const s=staffData.find(s=>s.name===document.getElementById('m-staff').value);
+  if(s){if(s.start)document.getElementById('m-start').value=s.start;if(s.end)document.getElementById('m-end').value=s.end;}
+}
+function onStatusChange(){document.getElementById('m-time-wrap').style.display=document.getElementById('m-status').value==='work'?'block':'none';}
+function closeEntryModal(){document.getElementById('entry-modal').classList.remove('show');editTarget=null;}
+
+function saveEntry(){
+  if(!editTarget)return;
+  const {dateKey,idx}=editTarget;
+  const entry={name:document.getElementById('m-staff').value,status:document.getElementById('m-status').value,start:document.getElementById('m-start').value,end:document.getElementById('m-end').value,memo:document.getElementById('m-memo').value};
+  if(!schedule[dateKey])schedule[dateKey]=[];
+  if(idx===null)schedule[dateKey].push(entry);
+  else schedule[dateKey][idx]=entry;
+  closeEntryModal();renderCalBody();
+}
+
+function delEntry(){
+  if(!editTarget||editTarget.idx===null)return;
+  if(!confirm('삭제할까요?'))return;
+  const {dateKey,idx}=editTarget;
+  schedule[dateKey].splice(idx,1);
+  if(!schedule[dateKey].length)delete schedule[dateKey];
+  closeEntryModal();renderCalBody();
+}
+
+function saveSchedule(){
+  const ym=curYear+'-'+pad(curMonth+1);
+  const rows=[];
+  Object.keys(schedule).forEach(k=>{
+    if(!k.startsWith(ym))return;
+    schedule[k].forEach(e=>rows.push([k,e.name,e.status,e.start||'',e.end||'',e.memo||'']));
+  });
+  const msgEl=document.getElementById('save-msg');
+  msgEl.textContent='저장 중...';
+  fetch(SHEET_URL,{method:'POST',body:JSON.stringify({type:'save_schedule',yearMonth:ym,schedules:rows})})
+    .then(r=>r.json())
+    .then(d=>{msgEl.textContent=d.status==='ok'?'✓ 저장됨':'저장 실패';msgEl.style.color=d.status==='ok'?'#0C447C':'red';})
+    .catch(()=>{fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'save_schedule',yearMonth:ym,schedules:rows})}).then(()=>{msgEl.textContent='✓ 저장됨';msgEl.style.color='#0C447C';});})
+    .finally(()=>setTimeout(()=>msgEl.textContent='',3000));
+}
+
+// 직원관리
+function renderStaffList(){
+  const el=document.getElementById('staff-list');
+  const offs=['일','월','화','수','목','금','토'];
+  if(!staffData.length){el.innerHTML='<div style="color:#6B7280;font-size:13px;text-align:center;padding:16px;">등록된 직원이 없습니다.</div>';return;}
+  el.innerHTML=staffData.map((s,i)=>{
+    const [bg,tc]=(s.color||'#F3F4F6|#374151').split('|');
+    const timeStr=s.start&&s.end?s.start+'~'+s.end:'시간 미설정';
+    const offStr=s.offDays&&s.offDays.length?s.offDays.map(d=>offs[d]).join(', '):'없음';
+    return `<div class="staff-card">
+      <div class="staff-card-top">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="staff-chip" style="background:${bg};color:${tc};">${s.name}</span>
+          <span style="font-size:13px;font-weight:600;">${s.pos}</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-edit" onclick="openStaffEdit(${i})">✏️ 수정</button>
+          <button class="btn-retire" onclick="removeStaff(${i})">퇴사</button>
+        </div>
+      </div>
+      <div class="staff-card-info"><span>⏰ ${timeStr}</span><span>🚫 휴무: ${offStr}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function addStaff(){
+  if(!checkAdmin())return;
+  const name=document.getElementById('ns-name').value.trim();
+  if(!name){alert('이름을 입력해주세요.');return;}
+  if(staffData.find(s=>s.name===name)){alert('이미 같은 이름의 직원이 있어요.');return;}
+  const offDays=[0,1,2,3,4,5,6].filter(i=>document.getElementById('off'+i).checked);
+  staffData.push({name,pos:document.getElementById('ns-pos').value,start:document.getElementById('ns-start').value,end:document.getElementById('ns-end').value,offDays,color:document.getElementById('ns-color').value});
+  localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
+  document.getElementById('ns-name').value='';
+  [0,1,2,3,4,5,6].forEach(i=>document.getElementById('off'+i).checked=false);
+  renderStaffList();renderLegend();
+  alert('✓ '+name+' 직원이 추가됐어요!');
+}
+
+function removeStaff(idx){
+  if(!checkAdmin())return;
+  if(!confirm(staffData[idx].name+' 직원을 퇴사 처리할까요?'))return;
+  staffData.splice(idx,1);
+  localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
+  renderStaffList();renderLegend();
+}
+
+function openStaffEdit(idx){
+  if(!checkAdmin())return;
+  const s=staffData[idx];
+  document.getElementById('se-title').textContent='✏️ '+s.name+' 정보 수정';
+  document.getElementById('se-start').value=s.start||'';
+  document.getElementById('se-end').value=s.end||'';
+  [0,1,2,3,4,5,6].forEach(i=>document.getElementById('se-off'+i).checked=(s.offDays||[]).includes(i));
+  document.getElementById('se-idx').value=idx;
+  document.getElementById('staff-edit-modal').classList.add('show');
+}
+function closeStaffEdit(){document.getElementById('staff-edit-modal').classList.remove('show');}
+function saveStaffEdit(){
+  const idx=parseInt(document.getElementById('se-idx').value);
+  staffData[idx].start=document.getElementById('se-start').value;
+  staffData[idx].end=document.getElementById('se-end').value;
+  staffData[idx].offDays=[0,1,2,3,4,5,6].filter(i=>document.getElementById('se-off'+i).checked);
+  localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
+  closeStaffEdit();renderStaffList();
+  alert('✓ 수정됐어요!');
+}
+
+function saveStaffToSheet(){
+  if(!checkAdmin())return;
+  const rows=staffData.map(s=>[s.name,s.pos,s.start||'',s.end||'',(s.offDays||[]).join(','),s.color||'']);
+  const msgEl=document.getElementById('staff-save-msg');
+  msgEl.textContent='저장 중...';
+  fetch(SHEET_URL,{method:'POST',body:JSON.stringify({type:'save_staff',staffList:rows})})
+    .then(r=>r.json())
+    .then(d=>{msgEl.textContent=d.status==='ok'?'✓ 저장됨':'저장 실패';msgEl.style.color=d.status==='ok'?'#0C447C':'red';})
+    .catch(()=>{fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'save_staff',staffList:rows})}).then(()=>{msgEl.textContent='✓ 저장됨';msgEl.style.color='#0C447C';});})
+    .finally(()=>setTimeout(()=>msgEl.textContent='',3000));
+}
+
+// 초기화
+updateAdminUI();
+renderLegend();
+loadFromSheet();
+</script>
+</body>
+</html>
