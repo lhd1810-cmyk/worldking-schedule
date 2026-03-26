@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>월드킹 계양점 — 근무현황 캘린더</title>
+<meta property="og:title" content="월드킹 계양점 — 근무현황 캘린더"/>
+<meta property="og:description" content="월드킹 계양점 직원 근무현황"/>
+<meta name="description" content="월드킹 계양점 직원 근무현황"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -554,11 +557,9 @@ function addStaff(){
   const name=document.getElementById('ns-name').value.trim();
   if(!name){alert('이름을 입력해주세요.');return;}
   if(staffData.find(s=>s.name===name)){alert('이미 같은 이름의 직원이 있어요.');return;}
-  const offDays=[0,1,2,3,4,5,6].filter(i=>document.getElementById('off'+i).checked);
-  staffData.push({name,pos:document.getElementById('ns-pos').value,start:document.getElementById('ns-start').value,end:document.getElementById('ns-end').value,offDays,color:document.getElementById('ns-color').value});
+  staffData.push({name,pos:document.getElementById('ns-pos').value,start:document.getElementById('ns-start').value,end:document.getElementById('ns-end').value,offDays:[],color:document.getElementById('ns-color').value});
   localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
   document.getElementById('ns-name').value='';
-  [0,1,2,3,4,5,6].forEach(i=>document.getElementById('off'+i).checked=false);
   renderStaffList();renderLegend();
   alert('✓ '+name+' 직원이 추가됐어요!');
 }
