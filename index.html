@@ -252,9 +252,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
 <div class="modal-bg" id="staff-edit-modal">
   <div class="modal">
     <div class="modal-title" id="se-title">직원 정보 수정</div>
-    <div class="field" style="margin-bottom:10px;">
-      <label>이름</label>
-      <input type="text" id="se-name" placeholder="이름 입력"/>
+    <div class="g2" style="margin-bottom:10px;">
+      <div class="field">
+        <label>이름</label>
+        <input type="text" id="se-name" placeholder="이름 입력"/>
+      </div>
+      <div class="field">
+        <label>포지션</label>
+        <select id="se-pos">
+          <option>정규직</option><option>파트타임</option><option>관리자</option><option>사장님</option><option>대장님</option>
+        </select>
+      </div>
     </div>
     <div class="field" style="margin-bottom:10px;">
       <label>기본 출근 시간</label>
@@ -282,6 +290,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
 <option value="19:00">오후 7시</option>
 <option value="20:00">오후 8시</option>
 </select>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>색상</label>
+      <select id="se-color">
+        <option value="#DBEAFE|#1E40AF">파랑</option>
+        <option value="#EDE9FE|#5B21B6">보라</option>
+        <option value="#DCFCE7|#166534">초록</option>
+        <option value="#FEF3C7|#92400E">노랑</option>
+        <option value="#FCE7F3|#9D174D">분홍</option>
+        <option value="#FFF7ED|#C2410C">주황</option>
+        <option value="#F3F4F6|#374151">회색</option>
+        <option value="#CFFAFE|#164E63">하늘</option>
+        <option value="#FDE8FF|#7E22CE">라벤더</option>
+        <option value="#FEF9C3|#854D0E">크림</option>
+      </select>
     </div>
     <div class="field" style="margin-bottom:4px;">
       <label>기본 휴무 요일</label>
@@ -611,8 +634,10 @@ function openStaffEdit(idx){
   const s=staffData[idx];
   document.getElementById('se-title').textContent='✏️ '+s.name+' 정보 수정';
   document.getElementById('se-name').value=s.name||'';
+  document.getElementById('se-pos').value=s.pos||'파트타임';
   document.getElementById('se-start').value=s.start||'';
   document.getElementById('se-end').value=s.end||'';
+  document.getElementById('se-color').value=s.color||'#F3F4F6|#374151';
   [0,1,2,3,4,5,6].forEach(i=>document.getElementById('se-off'+i).checked=(s.offDays||[]).includes(i));
   document.getElementById('se-idx').value=idx;
   document.getElementById('staff-edit-modal').classList.add('show');
@@ -630,9 +655,11 @@ function saveStaffEdit(){
     });
   }
   staffData[idx].name=newName;
+  staffData[idx].pos=document.getElementById('se-pos').value;
   staffData[idx].start=document.getElementById('se-start').value;
   staffData[idx].end=document.getElementById('se-end').value;
   staffData[idx].offDays=[0,1,2,3,4,5,6].filter(i=>document.getElementById('se-off'+i).checked);
+  staffData[idx].color=document.getElementById('se-color').value;
   localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
   closeStaffEdit();renderStaffList();renderLegend();renderCalBody();
   alert('✓ 수정됐어요!');
