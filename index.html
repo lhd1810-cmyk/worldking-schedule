@@ -51,6 +51,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
 .entry .et{font-size:9px;opacity:.85;}
 .entry.off-e{background:#FEE2E2 !important;}
 .entry.off-e .en,.entry.off-e .et{color:#991B1B !important;}
+.entry.dragging{opacity:.4;border:2px dashed #9CA3AF;}
+.entry.drag-over{border-top:3px solid #0C447C;}
 .add-btn{position:absolute;bottom:3px;right:3px;font-size:10px;padding:2px 6px;border-radius:4px;border:1px dashed #9CA3AF;background:transparent;color:#9CA3AF;cursor:pointer;display:none;}
 .cal-cell:hover .add-btn{display:block;}
 .save-bar{padding:10px 16px;background:#fff;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:10px;position:sticky;bottom:0;z-index:50;}
@@ -413,10 +415,10 @@ function renderCalBody(){
       const s=staffData.find(s=>s.name===e.name);
       const [bg,tc]=((s&&s.color)||'#F3F4F6|#374151').split('|');
       if(e.status==='off'){
-        eHtml+=`<div class="entry off-e" onclick="openEdit('${key}',${idx})"><span class="en">🚫 ${e.name}</span><span class="et">휴무</span></div>`;
+        eHtml+=`<div class="entry off-e" draggable="true" data-date="${key}" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" onclick="openEdit('${key}',${idx})"><span class="en">🚫 ${e.name}</span><span class="et">휴무</span></div>`;
       } else {
         const t=(e.start&&e.end)?e.start+'~'+e.end:e.start?e.start+'~':'';
-        eHtml+=`<div class="entry" style="background:${bg};color:${tc};" onclick="openEdit('${key}',${idx})"><span class="en">${e.name}</span><span class="et">${t||e.memo||'근무'}</span></div>`;
+        eHtml+=`<div class="entry" draggable="true" data-date="${key}" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" style="background:${bg};color:${tc};" onclick="openEdit('${key}',${idx})"><span class="en">⠿ ${e.name}</span><span class="et">${t||e.memo||'근무'}</span></div>`;
       }
     });
     weekHtml+=`<div class="${cls}"><div class="${dateCls}">${d}</div>${eHtml}<button class="add-btn" onclick="openAdd('${key}')">+ 추가</button></div>`;
@@ -503,7 +505,41 @@ function saveSchedule(){
     .finally(()=>setTimeout(()=>msgEl.textContent='',3000));
 }
 
-// ✅ 직원 순서 이동
+// ✅ 드래그 앤 드롭 - 캘린더 항목 순서 변경
+let dragSrc=null;
+
+function onDragStart(e){
+  dragSrc=e.currentTarget;
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>dragSrc.classList.add('dragging'),0);
+}
+function onDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.entry').forEach(el=>el.classList.remove('drag-over'));
+  if(e.currentTarget!==dragSrc) e.currentTarget.classList.add('drag-over');
+}
+function onDrop(e){
+  e.preventDefault();
+  e.stopPropagation();
+  const target=e.currentTarget;
+  if(!dragSrc||dragSrc===target)return;
+  const fromDate=dragSrc.dataset.date;
+  const toDate=target.dataset.date;
+  if(fromDate!==toDate)return; // 같은 날짜 안에서만 이동
+  const fromIdx=parseInt(dragSrc.dataset.idx);
+  const toIdx=parseInt(target.dataset.idx);
+  const arr=schedule[fromDate];
+  const item=arr.splice(fromIdx,1)[0];
+  arr.splice(toIdx,0,item);
+  document.querySelectorAll('.entry').forEach(el=>el.classList.remove('drag-over'));
+  renderCalBody();
+}
+function onDragEnd(e){
+  document.querySelectorAll('.entry').forEach(el=>{el.classList.remove('dragging');el.classList.remove('drag-over');});
+  dragSrc=null;
+}
+
 function moveStaff(idx,dir){
   if(!checkAdmin())return;
   const newIdx=idx+dir;
