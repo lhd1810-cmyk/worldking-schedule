@@ -64,6 +64,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
 .staff-card-info{font-size:11px;color:#6B7280;display:flex;gap:12px;flex-wrap:wrap;}
 .btn-edit{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #378ADD;background:#E6F1FB;color:#0C447C;cursor:pointer;font-family:inherit;}
 .btn-retire{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #EF4444;background:#FEF2F2;color:#DC2626;cursor:pointer;font-family:inherit;}
+.btn-up,.btn-down{font-size:12px;padding:3px 7px;border-radius:5px;border:1px solid #e5e7eb;background:#F9FAFB;color:#374151;cursor:pointer;font-family:inherit;line-height:1;}
+.btn-up:hover,.btn-down:hover{background:#e5e7eb;}
+.btn-up:disabled,.btn-down:disabled{opacity:.3;cursor:default;}
 .add-form{background:#fff;border-radius:10px;padding:16px;border:1px solid #e5e7eb;margin-top:10px;}
 .form-title{font-size:13px;font-weight:700;margin-bottom:12px;color:#0C447C;}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
@@ -136,7 +139,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
 </div>
 <div class="staff-page" id="staff-page">
 <div class="inner">
-  <div class="form-title" style="margin-bottom:8px;">👥 현재 직원</div>
+  <div class="form-title" style="margin-bottom:8px;">👥 현재 직원 <span style="font-size:11px;color:#6B7280;font-weight:400;">▲▼ 버튼으로 순서 변경 가능</span></div>
   <div id="staff-list"></div>
   <div class="add-form">
     <div class="form-title">+ 직원 추가</div>
@@ -169,7 +172,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
 <option value="20:00">오후 8시</option>
 </select></div>
     </div>
-
     <div class="field" style="margin-bottom:10px;">
       <label>색상</label>
       <select id="ns-color">
@@ -309,43 +311,25 @@ const DEFAULT_STAFF=[
   {name:'주연',pos:'파트타임',start:'16:00',end:'20:00',offDays:[],color:'#F3F4F6|#374151'},
   {name:'사장님',pos:'관리자',start:'',end:'',offDays:[],color:'#FEF9C3|#854D0E'},
 ];
-let staffData = JSON.parse(localStorage.getItem('wk_staff_v3')||'null') || DEFAULT_STAFF.map(s=>({...s}));
-let schedule = {};
-let isAdmin = sessionStorage.getItem('wk_admin')==='1';
-let editTarget = null;
-const now = new Date();
-let curYear = now.getFullYear();
-let curMonth = now.getMonth();
+let staffData=JSON.parse(localStorage.getItem('wk_staff_v3')||'null')||DEFAULT_STAFF.map(s=>({...s}));
+let schedule={};
+let isAdmin=sessionStorage.getItem('wk_admin')==='1';
+let editTarget=null;
+const now=new Date();
+let curYear=now.getFullYear();
+let curMonth=now.getMonth();
 
 function pad(n){return n<10?'0'+n:String(n);}
 function dk(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d);}
 function isHol(k){return HOLIDAYS.includes(k);}
-function fmtT(t){
-  if(!t)return '';
-  const [hStr,mStr]=t.split(':');
-  const h=parseInt(hStr),m=parseInt(mStr)||0;
-  return (h<12?'오전 ':'오후 ')+(h<=12?h:h-12)+'시'+(m>0?' '+m+'분':'');
-}
 
-// 연도/월 셀렉트 초기화
 (function(){
   const sy=document.getElementById('sel-year');
-  for(let y=2025;y<=2028;y++){
-    const o=document.createElement('option');
-    o.value=y;o.textContent=y+'년';
-    if(y===curYear)o.selected=true;
-    sy.appendChild(o);
-  }
+  for(let y=2025;y<=2028;y++){const o=document.createElement('option');o.value=y;o.textContent=y+'년';if(y===curYear)o.selected=true;sy.appendChild(o);}
   const sm=document.getElementById('sel-month');
-  for(let m=0;m<12;m++){
-    const o=document.createElement('option');
-    o.value=m;o.textContent=(m+1)+'월';
-    if(m===curMonth)o.selected=true;
-    sm.appendChild(o);
-  }
+  for(let m=0;m<12;m++){const o=document.createElement('option');o.value=m;o.textContent=(m+1)+'월';if(m===curMonth)o.selected=true;sm.appendChild(o);}
 })();
 
-// 관리자 모드
 function checkAdmin(){
   if(isAdmin)return true;
   const pw=prompt('관리자 비밀번호를 입력해주세요:');
@@ -378,14 +362,12 @@ function renderLegend(){
   }).join('');
 }
 
-// 구글 시트에서 해당 월 데이터 불러오기
 function loadFromSheet(){
-  const ym = curYear+'-'+pad(curMonth+1);
+  const ym=curYear+'-'+pad(curMonth+1);
   fetch(SHEET_URL+'?yearMonth='+ym)
     .then(r=>r.json())
     .then(data=>{
       if(data.status==='ok'){
-        // 해당 월 스케줄 초기화 후 덮어쓰기
         Object.keys(schedule).forEach(k=>{if(k.startsWith(ym))delete schedule[k];});
         if(data.schedules&&data.schedules.length){
           data.schedules.forEach(s=>{
@@ -393,7 +375,6 @@ function loadFromSheet(){
             schedule[s.date].push({name:s.staff,status:s.status||'work',start:s.startTime||'',end:s.endTime||'',memo:s.memo||''});
           });
         }
-        // 직원 데이터 덮어쓰기
         if(data.staffList&&data.staffList.length){
           staffData=data.staffList.map(s=>({
             name:String(s[0]||''),pos:String(s[1]||'정규직'),
@@ -409,12 +390,7 @@ function loadFromSheet(){
     .finally(()=>{renderLegend();renderCalBody();});
 }
 
-function onMonthChange(){
-  curYear=parseInt(document.getElementById('sel-year').value);
-  curMonth=parseInt(document.getElementById('sel-month').value);
-  loadFromSheet();
-}
-
+function onMonthChange(){curYear=parseInt(document.getElementById('sel-year').value);curMonth=parseInt(document.getElementById('sel-month').value);loadFromSheet();}
 function prevMonth(){curMonth--;if(curMonth<0){curMonth=11;curYear--;}document.getElementById('sel-year').value=curYear;document.getElementById('sel-month').value=curMonth;loadFromSheet();}
 function nextMonth(){curMonth++;if(curMonth>11){curMonth=0;curYear++;}document.getElementById('sel-year').value=curYear;document.getElementById('sel-month').value=curMonth;loadFromSheet();}
 function goToday(){curYear=now.getFullYear();curMonth=now.getMonth();document.getElementById('sel-year').value=curYear;document.getElementById('sel-month').value=curMonth;loadFromSheet();}
@@ -527,7 +503,19 @@ function saveSchedule(){
     .finally(()=>setTimeout(()=>msgEl.textContent='',3000));
 }
 
-// 직원관리
+// ✅ 직원 순서 이동
+function moveStaff(idx,dir){
+  if(!checkAdmin())return;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=staffData.length)return;
+  const temp=staffData[idx];
+  staffData[idx]=staffData[newIdx];
+  staffData[newIdx]=temp;
+  localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
+  renderStaffList();
+  renderLegend();
+}
+
 function renderStaffList(){
   const el=document.getElementById('staff-list');
   const offs=['일','월','화','수','목','금','토'];
@@ -536,9 +524,15 @@ function renderStaffList(){
     const [bg,tc]=(s.color||'#F3F4F6|#374151').split('|');
     const timeStr=s.start&&s.end?s.start+'~'+s.end:'시간 미설정';
     const offStr=s.offDays&&s.offDays.length?s.offDays.map(d=>offs[d]).join(', '):'없음';
+    const upDis=i===0?'disabled':'';
+    const downDis=i===staffData.length-1?'disabled':'';
     return `<div class="staff-card">
       <div class="staff-card-top">
         <div style="display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <button class="btn-up" onclick="moveStaff(${i},-1)" ${upDis}>▲</button>
+            <button class="btn-down" onclick="moveStaff(${i},1)" ${downDis}>▼</button>
+          </div>
           <span class="staff-chip" style="background:${bg};color:${tc};">${s.name}</span>
           <span style="font-size:13px;font-weight:600;">${s.pos}</span>
         </div>
@@ -605,7 +599,6 @@ function saveStaffToSheet(){
     .finally(()=>setTimeout(()=>msgEl.textContent='',3000));
 }
 
-// 초기화
 updateAdminUI();
 renderLegend();
 loadFromSheet();
