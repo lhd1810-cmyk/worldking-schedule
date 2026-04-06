@@ -253,6 +253,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
   <div class="modal">
     <div class="modal-title" id="se-title">직원 정보 수정</div>
     <div class="field" style="margin-bottom:10px;">
+      <label>이름</label>
+      <input type="text" id="se-name" placeholder="이름 입력"/>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
       <label>기본 출근 시간</label>
       <select id="se-start"><option value="">없음</option>
 <option value="09:30">오전 9시 30분</option>
@@ -606,6 +610,7 @@ function openStaffEdit(idx){
   if(!checkAdmin())return;
   const s=staffData[idx];
   document.getElementById('se-title').textContent='✏️ '+s.name+' 정보 수정';
+  document.getElementById('se-name').value=s.name||'';
   document.getElementById('se-start').value=s.start||'';
   document.getElementById('se-end').value=s.end||'';
   [0,1,2,3,4,5,6].forEach(i=>document.getElementById('se-off'+i).checked=(s.offDays||[]).includes(i));
@@ -615,11 +620,21 @@ function openStaffEdit(idx){
 function closeStaffEdit(){document.getElementById('staff-edit-modal').classList.remove('show');}
 function saveStaffEdit(){
   const idx=parseInt(document.getElementById('se-idx').value);
+  const newName=document.getElementById('se-name').value.trim();
+  if(!newName){alert('이름을 입력해주세요.');return;}
+  const oldName=staffData[idx].name;
+  // 캘린더 스케줄에서 이름 일괄 변경
+  if(oldName!==newName){
+    Object.keys(schedule).forEach(date=>{
+      schedule[date].forEach(e=>{if(e.name===oldName)e.name=newName;});
+    });
+  }
+  staffData[idx].name=newName;
   staffData[idx].start=document.getElementById('se-start').value;
   staffData[idx].end=document.getElementById('se-end').value;
   staffData[idx].offDays=[0,1,2,3,4,5,6].filter(i=>document.getElementById('se-off'+i).checked);
   localStorage.setItem('wk_staff_v3',JSON.stringify(staffData));
-  closeStaffEdit();renderStaffList();
+  closeStaffEdit();renderStaffList();renderLegend();renderCalBody();
   alert('✓ 수정됐어요!');
 }
 
