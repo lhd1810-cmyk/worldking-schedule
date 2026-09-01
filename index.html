@@ -51,6 +51,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
 .entry .et{font-size:9px;opacity:.85;}
 .entry.off-e{background:#FEE2E2 !important;}
 .entry.off-e .en,.entry.off-e .et{color:#991B1B !important;}
+.entry.sick-e{background:#FEF3C7 !important;}
+.entry.sick-e .en,.entry.sick-e .et{color:#92400E !important;}
 .entry.dragging{opacity:.4;border:2px dashed #9CA3AF;}
 .entry.drag-over{border-top:3px solid #0C447C;}
 .add-btn{position:absolute;bottom:3px;right:3px;font-size:10px;padding:2px 6px;border-radius:4px;border:1px dashed #9CA3AF;background:transparent;color:#9CA3AF;cursor:pointer;display:none;}
@@ -206,6 +208,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a1a1a;-web
       <select id="m-status" onchange="onStatusChange()">
         <option value="work">근무</option>
         <option value="off">휴무</option>
+        <option value="sick">병가</option>
       </select>
     </div>
     <div id="m-time-wrap">
@@ -443,6 +446,8 @@ function renderCalBody(){
       const [bg,tc]=((s&&s.color)||'#F3F4F6|#374151').split('|');
       if(e.status==='off'){
         eHtml+=`<div class="entry off-e" draggable="true" data-date="${key}" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" onclick="openEdit('${key}',${idx})"><span class="en">🚫 ${e.name}</span><span class="et">휴무</span></div>`;
+      } else if(e.status==='sick'){
+        eHtml+=`<div class="entry sick-e" draggable="true" data-date="${key}" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" onclick="openEdit('${key}',${idx})"><span class="en">🏥 ${e.name}</span><span class="et">병가</span></div>`;
       } else {
         const t=(e.start&&e.end)?e.start+'~'+e.end:e.start?e.start+'~':'';
         eHtml+=`<div class="entry" draggable="true" data-date="${key}" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" style="background:${bg};color:${tc};" onclick="openEdit('${key}',${idx})"><span class="en">⠿ ${e.name}</span><span class="et">${t||e.memo||'근무'}</span></div>`;
